@@ -1,4 +1,1 @@
-{
-  "firestore": { "rules": "firestore.rules" },
-  "storage": { "rules": "storage.rules" }
-}
+{"firestore":{"rules":"firestore.rules"},"storage":{"rules":"storage.rules"},"flutter":{"platforms":{"android":{"default":{"projectId":"campusconnect-3473c","appId":"1:36859672004:android:3823ba3988e8eda09b2091","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"campusconnect-3473c","configurations":{"android":"1:36859672004:android:3823ba3988e8eda09b2091","ios":"1:36859672004:ios:8f9df81fbe04ddc79b2091","macos":"1:36859672004:ios:d3222fd42ff5445a9b2091","web":"1:36859672004:web:6132ecfaf2134f619b2091","windows":"1:36859672004:web:02c92bbe4fed3b059b2091"}}}}}}
