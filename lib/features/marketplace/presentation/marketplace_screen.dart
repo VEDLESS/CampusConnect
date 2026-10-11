@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -212,17 +213,52 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    if (item.sellerPhone.isNotEmpty)
+                                    if (item.sellerId == FirebaseAuth.instance.currentUser?.uid)
                                       IconButton(
                                         visualDensity: VisualDensity.compact,
-                                        icon: const Icon(Icons.phone_outlined, size: 20),
-                                        onPressed: () => _contactSeller('tel', item.sellerPhone),
+                                        icon: Icon(Icons.delete_outline, color: theme.colorScheme.error, size: 20),
+                                        onPressed: () async {
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: const Text('Delete Listing?'),
+                                              content: const Text('Are you sure you want to delete this listing?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(context, false),
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(context, true),
+                                                  style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+                                                  child: const Text('Delete'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm == true) {
+                                            await ref.read(marketplaceRepositoryProvider).deleteItem(item.id);
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Listing deleted successfully.')),
+                                              );
+                                            }
+                                          }
+                                        },
+                                      )
+                                    else ...[
+                                      if (item.sellerPhone.isNotEmpty)
+                                        IconButton(
+                                          visualDensity: VisualDensity.compact,
+                                          icon: const Icon(Icons.phone_outlined, size: 20),
+                                          onPressed: () => _contactSeller('tel', item.sellerPhone),
+                                        ),
+                                      IconButton(
+                                        visualDensity: VisualDensity.compact,
+                                        icon: const Icon(Icons.email_outlined, size: 20),
+                                        onPressed: () => _contactSeller('mailto', item.sellerEmail),
                                       ),
-                                    IconButton(
-                                      visualDensity: VisualDensity.compact,
-                                      icon: const Icon(Icons.email_outlined, size: 20),
-                                      onPressed: () => _contactSeller('mailto', item.sellerEmail),
-                                    ),
+                                    ],
                                   ],
                                 )
                               ],
@@ -277,6 +313,7 @@ class _AddListingFormState extends ConsumerState<AddListingForm> {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
+        withData: true,
       );
       if (result == null || result.files.isEmpty) return;
 
@@ -489,4 +526,4 @@ class _AddListingFormState extends ConsumerState<AddListingForm> {
   }
 }
 
-const bool kIsWeb = bool.fromEnvironment('dart.library.js_util');
+

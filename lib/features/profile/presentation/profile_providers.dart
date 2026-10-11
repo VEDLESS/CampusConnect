@@ -8,11 +8,19 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
   return ProfileRepository(FirebaseFirestore.instance);
 });
 
-final userProfileProvider = StreamProvider<CampusUser?>((ref) {
-  // Watch authState to automatically load/unload profile based on login state
+final developerOverrideUidProvider = StateProvider<String?>((ref) => null);
+
+final currentUserIdProvider = Provider<String?>((ref) {
+  final override = ref.watch(developerOverrideUidProvider);
+  if (override != null) return override;
   final authState = ref.watch(authStateProvider).value;
-  if (authState == null) {
+  return authState?.uid;
+});
+
+final userProfileProvider = StreamProvider<CampusUser?>((ref) {
+  final uid = ref.watch(currentUserIdProvider);
+  if (uid == null) {
     return Stream.value(null);
   }
-  return ref.watch(profileRepositoryProvider).watchProfile(authState.uid);
+  return ref.watch(profileRepositoryProvider).watchProfile(uid);
 });

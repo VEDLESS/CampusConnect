@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -246,17 +247,91 @@ class _LostFoundScreenState extends ConsumerState<LostFoundScreen> {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
-                                        if (item.reporterContact.isNotEmpty)
+                                        if (item.isLost) ...[
+                                          TextButton.icon(
+                                            onPressed: () async {
+                                              final confirm = await showDialog<bool>(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Found this item?'),
+                                                  content: Text('Are you sure you want to report that you found "${item.title}"? This will mark the item as FOUND.'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.pop(context, false),
+                                                      child: const Text('Cancel'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () => Navigator.pop(context, true),
+                                                      style: TextButton.styleFrom(foregroundColor: theme.colorScheme.primary),
+                                                      child: const Text('Confirm'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                              if (confirm == true) {
+                                                await ref.read(lostFoundRepositoryProvider).markAsFound(item.id);
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(content: Text('"${item.title}" is now marked as FOUND!')),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                            icon: const Icon(Icons.check_circle_outline, size: 16),
+                                            label: const Text('Found It', style: TextStyle(fontSize: 12)),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: Colors.green,
+                                              visualDensity: VisualDensity.compact,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                        ],
+                                        if (item.reporterId == FirebaseAuth.instance.currentUser?.uid)
                                           IconButton(
                                             visualDensity: VisualDensity.compact,
-                                            icon: const Icon(Icons.phone_outlined, size: 18),
-                                            onPressed: () => _contactReporter('tel', item.reporterContact),
+                                            icon: Icon(Icons.delete_outline, color: theme.colorScheme.error, size: 18),
+                                            onPressed: () async {
+                                              final confirm = await showDialog<bool>(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Delete Report?'),
+                                                  content: const Text('Are you sure you want to delete this report?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.pop(context, false),
+                                                      child: const Text('Cancel'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () => Navigator.pop(context, true),
+                                                      style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+                                                      child: const Text('Delete'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                              if (confirm == true) {
+                                                await ref.read(lostFoundRepositoryProvider).deleteItem(item.id);
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(content: Text('Report deleted successfully.')),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                          )
+                                        else ...[
+                                          if (item.reporterContact.isNotEmpty)
+                                            IconButton(
+                                              visualDensity: VisualDensity.compact,
+                                              icon: const Icon(Icons.phone_outlined, size: 18),
+                                              onPressed: () => _contactReporter('tel', item.reporterContact),
+                                            ),
+                                          IconButton(
+                                            visualDensity: VisualDensity.compact,
+                                            icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                                            onPressed: () => _contactReporter('mailto', 'contact@campusconnect.app'),
                                           ),
-                                        IconButton(
-                                          visualDensity: VisualDensity.compact,
-                                          icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                                          onPressed: () => _contactReporter('mailto', 'contact@campusconnect.app'),
-                                        ),
+                                        ],
                                       ],
                                     )
                                   ],
@@ -311,6 +386,7 @@ class _ReportItemFormState extends ConsumerState<ReportItemForm> {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
+        withData: true,
       );
       if (result == null || result.files.isEmpty) return;
 
@@ -533,4 +609,4 @@ class _ReportItemFormState extends ConsumerState<ReportItemForm> {
   }
 }
 
-const bool kIsWeb = bool.fromEnvironment('dart.library.js_util');
+

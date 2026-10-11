@@ -5,6 +5,12 @@ class MockDataSeeder {
     final firestore = FirebaseFirestore.instance;
 
     try {
+      // Check users
+      final usersSnap = await firestore.collection('users').limit(1).get();
+      if (usersSnap.docs.isEmpty) {
+        await _seedUsers(firestore);
+      }
+
       // Check events
       final eventsSnap = await firestore.collection('events').limit(1).get();
       if (eventsSnap.docs.isEmpty) {
@@ -189,6 +195,76 @@ class MockDataSeeder {
 
     for (var item in items) {
       batch.set(col.doc(), item);
+    }
+    await batch.commit();
+  }
+
+  static Future<void> _seedUsers(FirebaseFirestore firestore) async {
+    final batch = firestore.batch();
+    final col = firestore.collection('users');
+
+    final users = [
+      {
+        'id': 'dummy_alice',
+        'email': 'alice.vance@univ.edu',
+        'displayName': 'Alice Vance',
+        'photoUrl': 'https://api.dicebear.com/7.x/adventurer/png?seed=Alice',
+        'rollNumber': 'CS23B1002',
+        'branch': 'Computer Science',
+        'semester': 6,
+        'phoneNumber': '+91 9999888801',
+        'username': 'alice_v',
+      },
+      {
+        'id': 'dummy_bob',
+        'email': 'bob.miller@univ.edu',
+        'displayName': 'Bob Miller',
+        'photoUrl': 'https://api.dicebear.com/7.x/adventurer/png?seed=Bob',
+        'rollNumber': 'EE22B2005',
+        'branch': 'Electrical Engineering',
+        'semester': 8,
+        'phoneNumber': '+91 9999888802',
+        'username': 'bob_m',
+      },
+      {
+        'id': 'dummy_charlie',
+        'email': 'charlie.day@univ.edu',
+        'displayName': 'Charlie Day',
+        'photoUrl': 'https://api.dicebear.com/7.x/adventurer/png?seed=Charlie',
+        'rollNumber': 'ME24B3012',
+        'branch': 'Mechanical Engineering',
+        'semester': 4,
+        'phoneNumber': '+91 9999888803',
+        'username': 'charlie_d',
+      },
+      {
+        'id': 'dummy_diana',
+        'email': 'diana.prince@univ.edu',
+        'displayName': 'Diana Prince',
+        'photoUrl': 'https://api.dicebear.com/7.x/adventurer/png?seed=Diana',
+        'rollNumber': 'CE25B4021',
+        'branch': 'Civil Engineering',
+        'semester': 2,
+        'phoneNumber': '+91 9999888804',
+        'username': 'diana_p',
+      },
+      {
+        'id': 'dummy_evan',
+        'email': 'evan.wright@univ.edu',
+        'displayName': 'Evan Wright',
+        'photoUrl': 'https://api.dicebear.com/7.x/adventurer/png?seed=Evan',
+        'rollNumber': 'BT22B5001',
+        'branch': 'Biotechnology',
+        'semester': 8,
+        'phoneNumber': '+91 9999888805',
+        'username': 'evan_w',
+      }
+    ];
+
+    for (var u in users) {
+      final docId = u['id'] as String;
+      final map = Map<String, dynamic>.from(u)..remove('id');
+      batch.set(col.doc(docId), map);
     }
     await batch.commit();
   }

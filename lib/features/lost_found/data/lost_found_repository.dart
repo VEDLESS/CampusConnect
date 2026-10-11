@@ -23,4 +23,8 @@ class LostFoundRepository {
   Future<void> deleteItem(String itemId) async {
     await _firestore.collection('lostAndFound').doc(itemId).delete();
   }
+
+  Future<void> markAsFound(String itemId) async {
+    await _firestore.collection('lostAndFound').doc(itemId).update({'isLost': false});
+  }
 }

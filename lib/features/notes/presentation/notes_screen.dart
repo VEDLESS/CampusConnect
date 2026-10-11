@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -169,10 +170,48 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                             Text('Uploaded by: ${note.uploaderName}', style: theme.textTheme.bodySmall),
                           ],
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.download_for_offline_outlined),
-                          color: theme.colorScheme.primary,
-                          onPressed: () => _downloadOrOpenUrl(note.fileUrl),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (note.uploaderId == FirebaseAuth.instance.currentUser?.uid)
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                color: theme.colorScheme.error,
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Delete Material?'),
+                                      content: const Text('Are you sure you want to delete this study material?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, true),
+                                          style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+                                          child: const Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    await ref.read(notesRepositoryProvider).deleteNote(note.id);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Material deleted successfully.')),
+                                      );
+                                    }
+                                  }
+                                },
+                              ),
+                            IconButton(
+                              icon: const Icon(Icons.download_for_offline_outlined),
+                              color: theme.colorScheme.primary,
+                              onPressed: () => _downloadOrOpenUrl(note.fileUrl),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -219,6 +258,7 @@ class _UploadNoteFormState extends ConsumerState<UploadNoteForm> {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx', 'png', 'jpg'],
+        withData: true,
       );
       if (result == null || result.files.isEmpty) return;
 
@@ -419,5 +459,4 @@ class _UploadNoteFormState extends ConsumerState<UploadNoteForm> {
   }
 }
 
-// Global variable for web compatibility check
-const bool kIsWeb = bool.fromEnvironment('dart.library.js_util');
+

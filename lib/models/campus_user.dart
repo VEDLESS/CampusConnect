@@ -8,6 +8,7 @@ class CampusUser {
     this.branch,
     this.semester,
     this.phoneNumber,
+    this.username,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class CampusUser {
   final String? branch;
   final int? semester;
   final String? phoneNumber;
+  final String? username;
 
   factory CampusUser.fromMap(String id, Map<String, dynamic> map) {
     return CampusUser(
@@ -29,6 +31,7 @@ class CampusUser {
       branch: map['branch'] as String?,
       semester: map['semester'] as int?,
       phoneNumber: map['phoneNumber'] as String?,
+      username: map['username'] as String?,
     );
   }
 
@@ -41,6 +44,7 @@ class CampusUser {
       'branch': branch,
       'semester': semester,
       'phoneNumber': phoneNumber,
+      'username': username,
     };
   }
 }
